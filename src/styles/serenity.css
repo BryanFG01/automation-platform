@@ -1,0 +1,109 @@
+:root {
+  --text-color: #1f2937;
+  --subtext-color: #6b7280;
+  --background-color: #f9fafb;
+  --card-bg: #ffffff;
+  --danger-color: #dc2626;
+  --success-color: #16a34a;
+  --border-radius: 12px;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --font: "Segoe UI", Roboto, sans-serif;
+}
+
+/* General */
+body,
+html {
+  font-family: var(--font);
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+button {
+  background-color: #2563eb;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  margin: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Container */
+.ReportsApp {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  font-size: 0.9rem;
+  color: var(--subtext-color);
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.breadcrumb span {
+  cursor: pointer;
+}
+
+.breadcrumb span:hover {
+  text-decoration: underline;
+}
+
+Card list .card-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  padding: 1rem 1.5rem;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease;
+  overflow: auto;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  cursor: pointer;
+}
+
+.card span {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--subtext-color);
+  font-size: 0.9rem;
+}
+
+/* Error */
+/* .error {
+  color: var(--danger-color);
+  margin: 1rem 0;
+}
+
+/* Report Viewer */
+.report-viewer iframe {
+  border: none;
+  margin-top: 1rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+*/ Loader & Empty */ .loading,
+.empty {
+  font-size: 1rem;
+  color: var(--subtext-color);
+}

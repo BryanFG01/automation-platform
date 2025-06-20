@@ -1,29 +1,54 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
+import { useState, useEffect, use } from "react";
 import "../styles/test-execution-panel.css";
+import ConfirmationModal from "./ConfirmationModal";
+import Swal from "sweetalert2";
+import { AlertTriangle } from "lucide-react";
+
+// const API_BASE_URL = "https://testing-api-gateway.sandboxcw.net/api";
+
+const getAuthHeaders = (token) => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${token}`,
+});
 
 function TestExecutionPanel() {
   const [isRunning, setIsRunning] = useState(false);
   const [activeTab, setActiveTab] = useState("Unidades de Negocio");
   const [selectedTests, setSelectedTests] = useState([]);
+  const [needsRefresh, setNeedsRefresh] = useState(true);
+
+  // const [showDeleteModal, setShowDeleteModal] = useState(false);
+  // const [testToDelete, setTestToDelete] = useState(null);
 
   const [businessUnits, setBusinessUnits] = useState(() => {
+    // Intenta cargar desde localStorage primero
     const saved = localStorage.getItem("businessUnits");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          {
-            id: "Unidades de Negocio",
-            name: "Unidades de Negocio",
-            tests: [],
-          },
-        ];
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Verifica que tenga la estructura correcta
+        if (
+          Array.isArray(parsed) &&
+          parsed.some((unit) => unit.id === "Unidades de Negocio")
+        ) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error("Error parsing saved units", e);
+      }
+    }
+
+    // Estado por defecto
+    return [
+      {
+        id: "Unidades de Negocio",
+        name: "Unidades de Negocio",
+        tests: [],
+      },
+    ];
   });
-  useEffect(() => {
-    localStorage.setItem("businessUnits", JSON.stringify(businessUnits));
-  }, [businessUnits]);
 
   const defaultTest = {
     name: "unit1011",
@@ -93,19 +118,25 @@ function TestExecutionPanel() {
   const [newTestJson, setNewTestJson] = useState(
     JSON.stringify(defaultTest, null, 2)
   );
-
   const handleRunTests = async () => {
+    // Validación inicial
+    if (selectedTests.length === 0) {
+      const result = await Swal.fire({
+        icon: "error",
+        title: "Por favor, selecciona al menos una prueba.",
+        confirmButtonText: "Aceptar",
+        confirmButtonColor: "var(--primary)",
+        background: "white",
+        color: "black",
+      });
+      if (!result.isConfirmed) {
+        return;
+      }
+      return;
+    }
+
     setIsRunning(true);
-
     const token = localStorage.getItem("access_token");
-
-    const allTests =
-      businessUnits.find((unit) => unit.id === "Unidades de Negocio")?.tests ||
-      [];
-
-    const testsToRun = allTests.filter((test) =>
-      selectedTests.includes(test.id)
-    );
 
     if (!token) {
       console.error("No se encontró el token de acceso.");
@@ -113,127 +144,181 @@ function TestExecutionPanel() {
       return;
     }
 
-    // 1. 🔄 Llamar a la API para recargar unidades
-    try {
-      const reloadResponse = await fetch(
-        "https://testing-api-gateway.sandboxcw.net/api/business-units/",
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
+    // Obtener pruebas seleccionadas
+    const mainUnit = businessUnits.find(
+      (unit) => unit.id === "Unidades de Negocio"
+    );
+    const testsToRun =
+      mainUnit?.tests.filter(
+        (test) =>
+          selectedTests.includes(test.id) || selectedTests.includes(test.name)
+      ) || [];
 
-      if (!reloadResponse.ok) {
-        console.warn("No se pudo recargar las unidades.");
-      } else {
-        console.log("Unidades recargadas correctamente.");
-      }
+    console.log("Pruebas a ejecutar:", testsToRun); // Debug
 
-      // esperar un momento por si la recarga es asíncrona internamente
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error("Error al recargar unidades:", error);
+    if (testsToRun.length === 0) {
+      console.error("No se encontraron pruebas coincidentes con la selección");
       setIsRunning(false);
       return;
     }
 
-    // 2. 🚀 Ejecutar pruebas luego de recargar unidades
-    for (const test of testsToRun) {
-      const endpoint = `https://testing-api-gateway.sandboxcw.net/api/units/${test.id}/test-runs`;
-
-      console.log(`Ejecutando ${test.name}`);
-
-      try {
-        const response = await fetch(endpoint, {
-          method: "POST",
+    try {
+      // 1. Recargar unidades
+      const reloadPromises = [
+        fetch("http://localhost:8100/api/business-units", {
+          method: "GET",
           headers: {
+            Accept: "application/json",
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            name: "Prueba con testRunner especifico",
-            testRunner:
-              test.test_runner_config?.test_runner_name || "TestRunnerDefault",
-          }),
-        });
+        }),
+        fetch("http://localhost:8100/reload-units", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+      ];
 
-        const result = await response.json();
-        console.log(`Resultado para ${test.name}:`, result);
-      } catch (err) {
-        console.error(`Error ejecutando ${test.name}:`, err);
-      }
+      const [reloadResponse, reloadResponseBusinessUnit] = await Promise.all(
+        reloadPromises
+      );
+
+      if (!reloadResponse.ok) console.warn("No se pudo recargar las unidades.");
+      if (!reloadResponseBusinessUnit.ok)
+        console.warn("No se pudo recargar las unidades (business).");
+
+      // Pequeña pausa para asegurar la recarga
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // 2. Ejecutar pruebas seleccionadas
+      const executionPromises = testsToRun.map(async (test) => {
+        try {
+          const endpoint = `http://localhost:8100/api/units/${test.name}/test-runs`;
+          console.log(`Iniciando ejecución de ${test.name}`);
+
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              name: `Ejecución de ${test.name}`,
+              testRunner:
+                test.test_runner_config?.test_runner_name ||
+                "TestRunnerDefault",
+            }),
+          });
+
+          const result = await response.json();
+          console.log(`Resultado de ${test.name}:`, result);
+          return result;
+        } catch (err) {
+          console.error(`Error en ${test.name}:`, err);
+          return { error: true, message: err.message };
+        }
+      });
+
+      const results = await Promise.all(executionPromises);
+      console.log("Resultados completos:", results);
+    } catch (error) {
+      console.error("Error general en la ejecución:", error);
+    } finally {
+      setIsRunning(false);
     }
-
-    setIsRunning(false);
   };
+  // 2. Modifica el useEffect de carga de datos
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
 
-  const getBusinessUnit = () => {
-    const url = "https://testing-api-gateway.sandboxcw.net/api/business-units";
-    const token = localStorage.getItem("access_token");
-    // console.log(token);
+      try {
+        const response = await fetch(
+          "http://localhost:8100/api/business-units",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-    fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+        if (response.ok) {
+          const units = await response.json();
+          const validUnits = Array.isArray(units) ? units : [];
 
-    // fetch(url, {
-    //   method: "GET",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //     Authorization: `Bearer ${token}`,
-    //   },
-    // })
-    //   .then((response) => {
-    //     if (!response.ok) {
-    //       throw new Error(`HTTPS error! Status: ${response.status}`);
-    //     }
-    //     return response.json();
-    //   })
-    //   .then((data) => {
-    //     console.log(data);
-    //   })
-    //   .catch((error) => {
-    //     console.error("Error:", error);
-    //   });
-  };
+          // Actualiza el estado manteniendo cualquier dato local que no esté en el backend
+          setBusinessUnits((prevUnits) => {
+            const mainUnit = prevUnits.find(
+              (unit) => unit.id === "Unidades de Negocio"
+            ) || {
+              id: "Unidades de Negocio",
+              name: "Unidades de Negocio",
+              tests: [],
+            };
 
+            // Combina tests locales con los del backend, evitando duplicados
+            const mergedTests = [
+              ...mainUnit.tests.filter(
+                (localTest) =>
+                  !validUnits.some(
+                    (backendTest) => backendTest.name === localTest.name
+                  )
+              ),
+              ...validUnits,
+            ];
+
+            return [
+              {
+                ...mainUnit,
+                tests: mergedTests,
+              },
+            ];
+          });
+        }
+      } catch (err) {
+        console.error("Error al cargar unidades:", err);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
   const handleJsonChange = (e) => {
     setNewTestJson(e.target.value);
   };
 
   const handleSaveNewTest = async () => {
-    const guardarUnidadEndpoint = `https://testing-api-gateway.sandboxcw.net/api/business-units/`;
     const token = localStorage.getItem("access_token");
+    if (!token) return;
 
     try {
       const newTest = JSON.parse(newTestJson);
+      newTest.id = newTest.id || `${newTest.name}-${Date.now()}`;
 
-      // // Asignar un ID si no viene definido
-      // newTest.id = newTest.id || newTest.name;
+      // Guardar en el backend
+      const response = await fetch(
+        "http://localhost:8100/api/business-units/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(newTest),
+        }
+      );
 
-      // 🔄 Enviar al backend
-      const response = await fetch(guardarUnidadEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newTest),
-      });
-
-      if (!response.ok) {
-        console.Error(`Error en el guardado: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error("Error al guardar en el backend");
 
       const savedTest = await response.json();
 
-      // ✅ Actualizar el estado local después de guardar exitosamente
+      // Actualizar el estado local
       setBusinessUnits((prevUnits) =>
         prevUnits.map((unit) =>
           unit.id === "Unidades de Negocio"
@@ -245,20 +330,36 @@ function TestExecutionPanel() {
         )
       );
 
+      // Resetear el formulario
       setNewTestJson(JSON.stringify(defaultTest, null, 2));
       setActiveTab("Unidades de Negocio");
-      console.log("Unidad guardada correctamente.");
     } catch (err) {
-      alert("JSON inválido o error en la API.");
-      console.error(err);
+      console.error("Error al guardar unidad:", err);
+      alert(
+        "Error al guardar la unidad. Verifica la consola para más detalles."
+      );
     }
   };
 
   const handleDeleteTest = async (testId) => {
-    console.log(`Eliminando unidad ${testId.id}`);
-    console.log(Object.keys(testId));
+    const result = await Swal.fire({
+      icon: "warning",
+      title: "¿Estás seguro?",
+      text: `Vas a eliminar la unidad: ${testId.name}?`,
+      showCancelButton: true,
+      confirmButtonText: "Aceptar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "var(--primary)",
+      background: "white",
+      color: "black",
+    });
 
-    const deleteEndpoint = `https://testing-api-gateway.sandboxcw.net/api/business-units/${testId.name}`;
+    if (!result.isConfirmed) {
+      console.log("Cancelado");
+      return; // Salimos si cancela
+    }
+
+    const deleteEndpoint = `http://localhost:8100/api/business-units/${testId.name}`;
     const token = localStorage.getItem("access_token");
 
     if (!token) {
@@ -267,6 +368,19 @@ function TestExecutionPanel() {
     }
 
     try {
+      // Primero actualiza el estado local para reflejar el cambio inmediatamente
+      setBusinessUnits((prevUnits) =>
+        prevUnits.map((unit) =>
+          unit.id === "Unidades de Negocio"
+            ? {
+                ...unit,
+                tests: unit.tests.filter((test) => test.name !== testId.name),
+              }
+            : unit
+        )
+      );
+
+      // Luego realiza la llamada al backend
       const response = await fetch(deleteEndpoint, {
         method: "DELETE",
         headers: {
@@ -279,28 +393,32 @@ function TestExecutionPanel() {
         throw new Error(`Error al eliminar: ${response.statusText}`);
       }
 
-      // ✅ Elimina del estado para evitar duplicados en el render
-      setBusinessUnits((prevUnits) =>
-        prevUnits.filter((unit) => unit.name !== testId.name)
-      );
+      console.log(`Unidad ${testId.name} eliminada exitosamente.`);
 
-      console.log(`Unidad ${testId} eliminada exitosamente.`);
+      // Finalmente, fuerza una recarga limpia del backend
+      setNeedsRefresh(true);
     } catch (error) {
       console.error("Error al eliminar unidad de negocio:", error);
+      // Si hay error, recargamos para restaurar el estado
+      setNeedsRefresh(true);
     }
   };
-
-  const handleCheckboxChange = (testId) => {
-    setSelectedTests((prevSelected) =>
-      prevSelected.includes(testId)
-        ? prevSelected.filter((id) => id !== testId)
-        : [...prevSelected, testId]
-    );
+  const handleCheckboxChange = (testName) => {
+    setSelectedTests((prevSelected) => {
+      // Si ya está seleccionado, lo removemos
+      if (prevSelected.includes(testName)) {
+        return prevSelected.filter((name) => name !== testName);
+      }
+      // Si no está seleccionado, lo agregamos
+      else {
+        return [...prevSelected, testName];
+      }
+    });
   };
 
   useEffect(() => {
-    getBusinessUnit();
-  }, []);
+    localStorage.setItem("businessUnits", JSON.stringify(businessUnits));
+  }, [businessUnits]);
 
   return (
     <div className="execution-panel-card">
@@ -342,62 +460,71 @@ function TestExecutionPanel() {
                   <h3>{unit.name}</h3>
                 </div>
                 <div className="tests-list">
-                  {unit.tests.map((test) => (
-                    <div key={test.id} className="test-item">
-                      <label className="checkbox-container">
-                        <input
-                          type="checkbox"
-                          id={test.id}
-                          checked={selectedTests.includes(test.id)}
-                          onChange={() => handleCheckboxChange(test.id)}
-                        />
-
-                        <span className="checkmark"> </span>
-                        <span className="test-name">{test.name}</span>
-                      </label>
-                      <span className="test-duration">2.1s</span>
-
-                      <button
-                        // onClick={() => handleDeleteTest(test.id)}
-                        style={{
-                          marginLeft: "10px",
-                          background: "transparent",
-                          color: "red",
-                          border: "none",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {/* Editar */}
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke-width="1.5"
-                          stroke="currentColor"
-                          class="svg-edit"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                  {Array.isArray(unit.tests) &&
+                    unit.tests.map((test) => (
+                      <div key={test.id} className="test-item">
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            id={test.id}
+                            checked={selectedTests.includes(test.name)}
+                            onChange={() => handleCheckboxChange(test.name)}
                           />
-                        </svg>
-                      </button>
+                          <span className="checkmark"></span>
+                          <span className="test-name">{test.name}</span>
+                        </label>
+                        <span className="test-duration">2.1s</span>
 
-                      <button
-                        onClick={() => handleDeleteTest(test)}
-                        style={{
-                          marginLeft: "10px",
-                          background: "transparent",
-                          color: "red",
-                          border: "none",
-                          cursor: "pointer",
-                        }}
-                      >
-                        🗑
-                      </button>
-                    </div>
-                  ))}
+                        <button
+                          // onClick={() => handleSaveNewTest(test.name)}
+                          style={{
+                            marginLeft: "10px",
+                            background: "transparent",
+                            color: "red",
+                            border: "none",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {/* Editar */}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            class="svg-edit"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                            />
+                          </svg>
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteTest(test)}
+                          style={{
+                            marginLeft: "10px",
+                            background: "transparent",
+                            color: "red",
+                            border: "none",
+                            cursor: "pointer",
+                          }}
+                        >
+                          🗑
+                        </button>
+                        {/* <div>
+                          {showDeleteModal && (
+                            <ConfirmationModal
+                              message="¿Desea eliminar la unidad de negocio?"
+                              onConfirm={handleConfirmDelete}
+                              onCancel={handleCancelDelete}
+                            />
+                          )}
+                        </div> */}
+                      </div>
+                    ))}
                 </div>
               </div>
             ))}

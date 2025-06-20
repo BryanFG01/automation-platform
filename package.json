@@ -63,6 +63,7 @@
     "sonner": "^1.7.1",
     "stylus": "latest",
     "sugarss": "latest",
+    "sweetalert2": "^11.22.0",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "terser": "latest",

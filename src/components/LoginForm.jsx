@@ -17,19 +17,16 @@ function LoginForm({ onLoginSuccess }) {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        "https://testing-api-gateway.sandboxcw.net/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username: email,
-            password: password,
-          }),
-        }
-      );
+      const response = await fetch("http://localhost:8100/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: email,
+          password: password,
+        }),
+      });
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Código de error:", response.status);

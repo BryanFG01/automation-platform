@@ -74,12 +74,12 @@ function EmulatorView() {
             >
               Reporte Serenity
             </button>
-            <button
+            {/* <button
               className={`tab-button ${activeTab === "Correo" ? "active" : ""}`}
               onClick={() => setActiveTab("Correo")}
             >
               Envios de Reporte
-            </button>
+            </button> */}
           </div>
 
           <div
@@ -118,7 +118,7 @@ function EmulatorView() {
                 activeTab === "Correo" ? "active" : ""
               }`}
             >
-              <div className="correo-container">
+              {/* <div className="correo-container">
                 <button onClick={() => setShowCorreoModal(true)}>
                   Abrir Correo
                 </button>
@@ -128,7 +128,7 @@ function EmulatorView() {
                   setShowModal={setShowCorreoModal}
                   htmlContent={htmlContent}
                 />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

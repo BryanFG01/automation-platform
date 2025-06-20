@@ -1,12 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "../styles/dashboard-nav.css";
 
 function DashboardNav() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    navigate("/", { viewTransition: true });
+  };
 
   const routes = [
     {
@@ -194,7 +200,7 @@ function DashboardNav() {
                 </svg>
                 <span>admin@example.com</span>
               </div>
-              <Link to="/" className="logout-link">
+              <button className="logout-link" onClick={handleLogout}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -211,7 +217,7 @@ function DashboardNav() {
                   <line x1="21" y1="12" x2="9" y2="12"></line>
                 </svg>
                 Cerrar sesión
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -277,7 +283,7 @@ function DashboardNav() {
               <span className="user-email">admin@example.com</span>
             </div>
           </div>
-          <Link to="/" className="logout-link">
+          <button className="logout-link" onClick={handleLogout}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
@@ -294,7 +300,7 @@ function DashboardNav() {
               <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
             Cerrar sesión
-          </Link>
+          </button>
         </div>
       </div>
     </>

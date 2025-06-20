@@ -90,13 +90,13 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0.75rem;
-  color: var(--foreground);
+  color: white;
   border-radius: var(--radius);
   transition: background-color 0.2s;
 }
 
 .logout-link:hover {
-  background-color: var(--muted);
+  background-color: #1d4ed8;
   text-decoration: none;
 }
 

@@ -1,4 +1,5 @@
 import "../styles/dashboard-metrics.css";
+// import handleRunTests from "./TestExecutionPanel";
 
 function DashboardMetrics() {
   return (
@@ -6,20 +7,11 @@ function DashboardMetrics() {
       <div className="metric-card">
         <div className="metric-header">
           <h3>Total de pruebas</h3>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            className="metric-icon"
-          >
-            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
         </div>
-        <div className="metric-value">1,248</div>
+        <div className="metric-value">
+          {/* <span>{executedTests.length}</span> */}
+          1,248
+        </div>
         <p className="metric-trend">+12% respecto al mes anterior</p>
       </div>
       <div className="metric-card">

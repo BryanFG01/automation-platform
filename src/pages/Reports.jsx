@@ -1,8 +1,8 @@
-import DashboardLayout from "../components/DashboardLayout"
-import DashboardHeader from "../components/DashboardHeader"
-import ReportsOverview from "../components/ReportsOverview"
-import ReportsTable from "../components/ReportsTable"
-import "../styles/reports.css"
+import DashboardLayout from "../components/DashboardLayout";
+import DashboardHeader from "../components/DashboardHeader";
+import ReportsOverview from "../components/ReportsOverview";
+import ReportsTable from "../components/ReportsTable";
+import "../styles/reports.css";
 
 function Reports() {
   return (
@@ -18,7 +18,7 @@ function Reports() {
         </main>
       </div>
     </DashboardLayout>
-  )
+  );
 }
 
-export default Reports
+export default Reports;

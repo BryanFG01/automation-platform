@@ -57,27 +57,27 @@ function DashboardNav() {
         </svg>
       ),
     },
-    {
-      name: "Reportes",
-      href: "/reports",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="18" y1="20" x2="18" y2="10"></line>
-          <line x1="12" y1="20" x2="12" y2="4"></line>
-          <line x1="6" y1="20" x2="6" y2="14"></line>
-        </svg>
-      ),
-    },
+    // {
+    //   name: "Reportes",
+    //   href: "/reports",
+    //   icon: (
+    //     <svg
+    //       xmlns="http://www.w3.org/2000/svg"
+    //       width="16"
+    //       height="16"
+    //       viewBox="0 0 24 24"
+    //       fill="none"
+    //       stroke="currentColor"
+    //       strokeWidth="2"
+    //       strokeLinecap="round"
+    //       strokeLinejoin="round"
+    //     >
+    //       <line x1="18" y1="20" x2="18" y2="10"></line>
+    //       <line x1="12" y1="20" x2="12" y2="4"></line>
+    //       <line x1="6" y1="20" x2="6" y2="14"></line>
+    //     </svg>
+    //   ),
+    // },
     {
       name: "Configuración",
       href: "/settings",
@@ -170,6 +170,7 @@ function DashboardNav() {
             <nav className="mobile-nav-links">
               {routes.map((route) => (
                 <Link
+                  viewTransition
                   key={route.href}
                   to={route.href}
                   className={`nav-link ${

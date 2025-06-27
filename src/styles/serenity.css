@@ -77,10 +77,10 @@ Card list .card-list {
   overflow: auto;
 }
 
-.card:hover {
+/* .card:hover {
   transform: translateY(-2px);
   cursor: pointer;
-}
+} */
 
 .card span {
   display: block;

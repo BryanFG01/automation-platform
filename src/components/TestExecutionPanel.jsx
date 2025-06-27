@@ -165,7 +165,7 @@ function TestExecutionPanel() {
     try {
       // 1. Recargar unidades
       const reloadPromises = [
-        fetch("http://localhost:8100/api/business-units", {
+        fetch("https://testing-api-gateway.sandboxcw.net/api/business-units", {
           method: "GET",
           headers: {
             Accept: "application/json",
@@ -173,7 +173,7 @@ function TestExecutionPanel() {
             Authorization: `Bearer ${token}`,
           },
         }),
-        fetch("http://localhost:8100/reload-units", {
+        fetch("https://testing-api-gateway.sandboxcw.net/reload-units", {
           method: "GET",
           headers: {
             Accept: "application/json",
@@ -197,7 +197,7 @@ function TestExecutionPanel() {
       // 2. Ejecutar pruebas seleccionadas
       const executionPromises = testsToRun.map(async (test) => {
         try {
-          const endpoint = `http://localhost:8100/api/units/${test.name}/test-runs`;
+          const endpoint = `https://testing-api-gateway.sandboxcw.net/api/units/${test.name}/test-runs`;
           console.log(`Iniciando ejecución de ${test.name}`);
 
           const response = await fetch(endpoint, {
@@ -239,7 +239,7 @@ function TestExecutionPanel() {
 
       try {
         const response = await fetch(
-          "http://localhost:8100/api/business-units",
+          "https://testing-api-gateway.sandboxcw.net/api/business-units",
           {
             method: "GET",
             headers: {
@@ -303,7 +303,7 @@ function TestExecutionPanel() {
 
       // Guardar en el backend
       const response = await fetch(
-        "http://localhost:8100/api/business-units/",
+        "https://testing-api-gateway.sandboxcw.net/api/business-units/",
         {
           method: "POST",
           headers: {
@@ -359,7 +359,7 @@ function TestExecutionPanel() {
       return; // Salimos si cancela
     }
 
-    const deleteEndpoint = `http://localhost:8100/api/business-units/${testId.name}`;
+    const deleteEndpoint = `https://testing-api-gateway.sandboxcw.net/api/business-units/${testId.name}`;
     const token = localStorage.getItem("access_token");
 
     if (!token) {

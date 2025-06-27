@@ -23,7 +23,7 @@ const ReportsApp = () => {
     setError(null);
     try {
       const response = await fetch(
-        "http://localhost:8100/api/reports/business-units"
+        "https://testing-api-gateway.sandboxcw.net/api/reports/business-units"
       );
       if (!response.ok) throw new Error(`Error ${response.status}`);
       const data = await response.json();
@@ -41,7 +41,7 @@ const ReportsApp = () => {
     setShowReportViewer(false);
     try {
       const response = await fetch(
-        `http://localhost:8100/api/reports/business-units/${unitId}`
+        `https://testing-api-gateway.sandboxcw.net/api/reports/business-units/${unitId}`
       );
       if (!response.ok) throw new Error(`Error ${response.status}`);
       const data = await response.json();
@@ -55,7 +55,7 @@ const ReportsApp = () => {
   };
 
   const handleSendEmail = (unitId, report) => {
-    const reportLink = `http://localhost:8100/api/reports/business-units/${unitId}/${report.reportDir}/index.html`;
+    const reportLink = `https://testing-api-gateway.sandboxcw.net/api/reports/business-units/${unitId}/${report.reportDir}/index.html`;
     setHtmlContent(reportLink); // Solo el link
     setShowModal(true);
   };

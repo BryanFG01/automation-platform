@@ -15,16 +15,19 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8100/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: email,
-          password: password,
-        }),
-      });
+      const response = await fetch(
+        "https://testing-api-gateway.sandboxcw.net/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: email,
+            password: password,
+          }),
+        }
+      );
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Código de error:", response.status);
@@ -59,7 +62,7 @@ const LoginPage = () => {
         <div className="card-content">
           <form onSubmit={handleSubmit} className="login-form">
             {error && (
-              <div className="alert error">
+              <div className="alert_error">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -75,7 +78,7 @@ const LoginPage = () => {
                   <line x1="12" y1="8" x2="12" y2="12"></line>
                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
-                <span>{error}</span>
+                <span className="error-message">{error}</span>
               </div>
             )}
             <div className="form-group">

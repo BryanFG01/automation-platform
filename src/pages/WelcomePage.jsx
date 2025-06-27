@@ -2,6 +2,7 @@
 
 import { useNavigate } from "react-router-dom";
 import "../styles/welcome-page.css";
+import Logo from "../../public/welcome.png";
 
 function WelcomePage() {
   const navigate = useNavigate();
@@ -27,11 +28,7 @@ function WelcomePage() {
       </div>
       <div className="welcome-image">
         <div className="image-container">
-          <img
-            src="/public/welcome.png"
-            alt="Dashboard preview"
-            className="preview-image"
-          />
+          <img src={Logo} alt="Dashboard preview" className="preview-image" />
         </div>
         {/* <div className="stats-card">
                 <div className="stats-indicator">

@@ -1,14 +1,14 @@
 // hooks/PrivateRoute.jsx
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet } from 'react-router-dom'
 
-function PrivateRoute({ children }) {
-  const token = localStorage.getItem("access_token");
+function PrivateRoute() {
+  const token = localStorage.getItem('access_token')
 
   if (!token) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" replace />
   }
 
-  return <Outlet />;
+  return <Outlet />
 }
 
-export default PrivateRoute;
+export default PrivateRoute

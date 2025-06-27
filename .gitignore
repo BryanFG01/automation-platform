@@ -16,4 +16,7 @@ yarn-error.log*
 .env*
 
 
-
+# lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
